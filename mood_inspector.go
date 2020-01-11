@@ -1,6 +1,6 @@
 package main
 
-import "moodInspector/internal/app"
+import "mood_inspector/internal/app"
 
 func main() {
 	application := app.NewApp()
