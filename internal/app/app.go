@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
-	"github.com/voltento/mood_inspector/internal/pkg"
 	"log"
 	"math/rand"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	"github.com/voltento/mood_inspector/internal/pkg"
 )
 
 type App struct {
