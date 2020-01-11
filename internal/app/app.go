@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 	"math/rand"
-	"moodInspector/internal/pkg"
+	"mood_inspector/internal/pkg"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
