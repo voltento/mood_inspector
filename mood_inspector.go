@@ -1,13 +1,20 @@
 package main
 
 import (
-"log"
+	"flag"
+	"log"
 
-"github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("MyAwesomeBotToken")
+
+	secret := flag.String("secret", "", "pass secret to access api")
+	flag.Parse()
+	if secret == nil || *secret == "" {
+		log.Fatal("expected secret")
+	}
+	bot, err := tgbotapi.NewBotAPI(*secret)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -26,11 +33,13 @@ func main() {
 			continue
 		}
 
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 		msg.ReplyToMessageID = update.Message.MessageID
 
-		bot.Send(msg)
+		if _, er := bot.Send(msg); er != nil {
+			log.Println(er.Error())
+		}
 	}
 }
