@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"flag"
@@ -49,5 +49,9 @@ func (app *App) Run() {
 			log.Println(er.Error())
 		}
 	}
+}
 
+func main() {
+	application := NewApp()
+	application.Run()
 }
