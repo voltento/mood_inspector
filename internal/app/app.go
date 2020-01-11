@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
+	"github.com/voltento/mood_inspector/internal/pkg"
 	"log"
 	"math/rand"
-	"mood_inspector/internal/pkg"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
