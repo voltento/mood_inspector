@@ -14,6 +14,7 @@ func main() {
 	if secret == nil || *secret == "" {
 		log.Fatal("expected secret")
 	}
+
 	bot, err := tgbotapi.NewBotAPI(*secret)
 	if err != nil {
 		log.Panic(err)
@@ -35,7 +36,7 @@ func main() {
 
 		log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "What do you fill now?")
 		msg.ReplyToMessageID = update.Message.MessageID
 
 		if _, er := bot.Send(msg); er != nil {
