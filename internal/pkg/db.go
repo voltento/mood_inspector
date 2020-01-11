@@ -26,7 +26,7 @@ func (ch *chats) AddChat(id ID) {
 }
 
 func (ch *chats) Get() []ID {
-	var ids []ID
+	ids := make([]ID, 0, 0)
 	for id := range ch.ids {
 		ids = append(ids, id)
 	}

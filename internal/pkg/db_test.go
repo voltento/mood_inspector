@@ -14,28 +14,33 @@ func Test_chats_AddChat(t *testing.T) {
 	}
 	tests := []struct {
 		name   string
-		fields expect
+		expect expect
 		args   args
 	}{
 		{
 			name:   "Add value",
-			fields: expect{ids: []ID{1}},
+			expect: expect{ids: []ID{1}},
 			args:   args{ids: []ID{1}},
 		},
 		{
 			name:   "Add two values",
-			fields: expect{ids: []ID{1, 2}},
+			expect: expect{ids: []ID{1, 2}},
 			args:   args{ids: []ID{1, 2}},
 		},
 		{
 			name:   "Add three values",
-			fields: expect{ids: []ID{1, 2, 3}},
+			expect: expect{ids: []ID{1, 2, 3}},
 			args:   args{ids: []ID{1, 2, 3}},
 		},
 		{
 			name:   "Add two double values",
-			fields: expect{ids: []ID{1}},
+			expect: expect{ids: []ID{1}},
 			args:   args{ids: []ID{1, 1}},
+		},
+		{
+			name:   "Empty",
+			expect: expect{ids: []ID{}},
+			args:   args{ids: []ID{}},
 		},
 	}
 
@@ -46,8 +51,8 @@ func Test_chats_AddChat(t *testing.T) {
 				ch.AddChat(id)
 			}
 
-			if !reflect.DeepEqual(tt.fields.ids, ch.Get()) {
-				t.Errorf("Values are not equal: %v %v", tt.fields.ids, ch.Get())
+			if !reflect.DeepEqual(tt.expect.ids, ch.Get()) {
+				t.Errorf("Values are not equal: %v %v", tt.expect.ids, ch.Get())
 			}
 		})
 	}
