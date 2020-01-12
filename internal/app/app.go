@@ -46,6 +46,7 @@ func NewApp() *App {
 	}
 
 	bot.Debug = true
+	bot.Self = tgbotapi.User{ID: 867251407, IsBot: true}
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
