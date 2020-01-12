@@ -11,8 +11,22 @@ import (
 	"github.com/voltento/mood_inspector/internal/pkg"
 )
 
+const (
+	GREETING_MSG = "I'll be tracking you"
+	REMIND_MSG   = ` 
+1. What are you filling now?
+2. Why are you filling this emotion?
+3. What do you want now?
+4. Why do you want it?
+5. Which emotions do you need to get the goal?
+6. How to transit yourself to these emotions?
+`
+)
+
 type App struct {
-	db pkg.DataBase
+	db       pkg.DataBase
+	chatsMgr pkg.ChatsMgr
+	bot      *tgbotapi.BotAPI
 }
 
 func main() {
@@ -21,10 +35,6 @@ func main() {
 }
 
 func NewApp() *App {
-	return &App{db: pkg.NewDatabase()}
-}
-
-func (app *App) Run() {
 	secret := flag.String("secret", "", "pass secret to access api")
 	flag.Parse()
 	if secret == nil || *secret == "" {
@@ -40,31 +50,29 @@ func (app *App) Run() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
+	db := pkg.NewDatabase()
+	chatsMgr := pkg.NewChatsMgr(db, bot)
+	return &App{db: db, bot: bot, chatsMgr: chatsMgr}
+}
+
+func (app *App) Run() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	updates, err := bot.GetUpdatesChan(u)
+	updates, err := app.bot.GetUpdatesChan(u)
 
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	const timeout = time.Hour * 3
-	floatTimeoutPart := time.Duration(uint64(time.Minute) * (rand.Uint64() % 60))
-	timeoutChan := time.After(timeout + floatTimeoutPart)
+	timeoutChan := time.After(getReminderTimeout())
 
 	for {
 		select {
 		case <-timeoutChan:
-			timeoutChan = time.After(timeout)
+			timeoutChan = time.After(getReminderTimeout())
 			if appropriateTime() {
-				for _, chatId := range app.db.Chats.Get() {
-					msg := tgbotapi.NewMessage(int64(chatId), "What do you fill now?")
-
-					if _, er := bot.Send(msg); er != nil {
-						log.Println(er.Error())
-					}
-				}
+				app.chatsMgr.SendMsgToAll(REMIND_MSG)
 			}
 
 		case update := <-updates:
@@ -73,9 +81,9 @@ func (app *App) Run() {
 
 				log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "I wil be tracking you")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, GREETING_MSG)
 
-				if _, er := bot.Send(msg); er != nil {
+				if _, er := app.bot.Send(msg); er != nil {
 					log.Println(er.Error())
 				}
 			}
@@ -86,4 +94,10 @@ func (app *App) Run() {
 func appropriateTime() bool {
 	now := time.Now().Hour()
 	return now > 7 && now < 18
+}
+
+func getReminderTimeout() time.Duration {
+	const timeout = time.Hour * 3
+	floatTimeoutPart := time.Duration(uint64(time.Minute) * (rand.Uint64() % 60))
+	return timeout + floatTimeoutPart
 }
