@@ -98,7 +98,7 @@ func appropriateTime() bool {
 }
 
 func getReminderTimeout() time.Duration {
-	const timeout = time.Hour * 3
+	const timeout = time.Hour * 1
 	floatTimeoutPart := time.Duration(uint64(time.Minute) * (rand.Uint64() % 60))
 	return timeout + floatTimeoutPart
 }
