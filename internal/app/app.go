@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -81,7 +82,8 @@ func (app *App) Run() {
 
 				log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, GREETING_MSG)
+				text := fmt.Sprintf("%v\n You will recieve this messages several times a day: \n%v", GREETING_MSG, REMIND_MSG)
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 
 				if _, er := app.bot.Send(msg); er != nil {
 					log.Println(er.Error())
