@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -29,18 +29,27 @@ type App struct {
 }
 
 func main() {
-	application := NewApp()
+	cfg := pkg.BuildConfig()
+	application := NewApp(cfg)
 	application.Run()
 }
 
-func NewApp() *App {
-	secret := flag.String("secret", "", "pass secret to access api")
-	flag.Parse()
-	if secret == nil || *secret == "" {
-		log.Fatal("expected secret")
+func NewApp(config *pkg.Config) *App {
+	if data, err := json.Marshal(config); err != nil {
+		log.Fatalf("can not marshal config: %v", err.Error())
+	} else {
+		log.Printf("loaded config: %v", string(data))
 	}
 
-	bot, err := tgbotapi.NewBotAPI(*secret)
+	if len(config.TelegramBot.Id) == 0 {
+		log.Fatalf("expected not empty value for config section telegram_bot.id")
+	}
+
+	if len(config.TelegramBot.Secret) == 0 {
+		log.Fatalf("expected not empty value for config section telegram_bot.secret")
+	}
+
+	bot, err := tgbotapi.NewBotAPI(fmt.Sprintf("%v:%v", config.TelegramBot.Id, config.TelegramBot.Secret))
 	if err != nil {
 		log.Panic(err)
 	}

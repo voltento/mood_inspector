@@ -1,0 +1,6 @@
+{
+  "telegram_bot": {
+    "id": <id_string>,
+    "secret": <secret_string>
+  }
+}
