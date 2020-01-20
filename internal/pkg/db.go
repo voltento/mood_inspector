@@ -8,7 +8,7 @@ type (
 
 type Chats interface {
 	AddChat(ID)
-	Get() []ID
+	Get() map[ID]struct{}
 }
 
 type DataBase struct {
@@ -31,13 +31,14 @@ func (ch *chats) AddChat(id ID) {
 	ch.ids[id] = struct{}{}
 }
 
-func (ch *chats) Get() []ID {
+func (ch *chats) Get() map[ID]struct{} {
 	ch.mtx.Lock()
 	defer ch.mtx.Unlock()
 
-	ids := make([]ID, 0, 0)
-	for id := range ch.ids {
-		ids = append(ids, id)
+	result := make(map[ID]struct{})
+	for k, v := range ch.ids {
+		result[k] = v
 	}
-	return ids
+
+	return result
 }
