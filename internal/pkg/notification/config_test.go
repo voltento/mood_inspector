@@ -22,7 +22,7 @@ func Test_loadReminderConfig(t *testing.T) {
 	tests := []struct {
 		name               string
 		args               args
-		want               ReminderCfg
+		want               NotificationCfg
 		hasReadConfigError bool
 		hasUnmarshalError  bool
 	}{
@@ -43,7 +43,7 @@ func Test_loadReminderConfig(t *testing.T) {
       "certain_time": ["10:00AM"]
     }`,
 			},
-			want: ReminderCfg{
+			want: NotificationCfg{
 				Name:          "simple_reminder",
 				Message:       "notifications message",
 				RandomMessage: []string{"message 1", "message 2"},
@@ -72,7 +72,7 @@ func Test_loadReminderConfig(t *testing.T) {
 				}
 			}
 
-			result := ReminderCfg{}
+			result := NotificationCfg{}
 			err = configurator.Unmarshal(&result, DecoderConfigOptions())
 			if hasError := err != nil; hasError != tt.hasUnmarshalError {
 				if err != nil {

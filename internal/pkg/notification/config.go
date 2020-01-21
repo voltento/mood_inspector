@@ -15,7 +15,7 @@ type (
 		ExtraPeriod time.Duration `json:"extra_period" mapstructure:"extra_period"`
 	}
 
-	ReminderCfg struct {
+	NotificationCfg struct {
 		Name          string        `json:"name" mapstructure:"name"`
 		Message       string        `json:"message" mapstructure:"message"`
 		RandomMessage []string      `json:"random_message" mapstructure:"random_message"`
@@ -44,7 +44,7 @@ func DecoderConfigOptions() viper.DecoderConfigOption {
 	}
 }
 
-func (cfg *ReminderCfg) Equal(v *ReminderCfg) bool {
+func (cfg *NotificationCfg) Equal(v *NotificationCfg) bool {
 	if cfg.Name != v.Name {
 		return false
 	}
