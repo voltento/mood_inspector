@@ -66,3 +66,62 @@ func TestNewMessageProvider(t *testing.T) {
 		})
 	}
 }
+
+func Test_simpleMessageProvider_Message(t *testing.T) {
+	type fields struct {
+		message string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name:   "simple",
+			fields: fields{message: "foo"},
+			want:   "foo",
+		},
+		{
+			name:   "empty",
+			fields: fields{message: ""},
+			want:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := simpleMessageProvider{
+				message: tt.fields.message,
+			}
+			if got := s.Message(); got != tt.want {
+				t.Errorf("Message() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_randomMessageProvider_Message(t *testing.T) {
+	type fields struct {
+		messages []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name:   "simple",
+			fields: fields{messages: []string{"foo"}},
+			want:   "foo",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := randomMessageProvider{
+				messages: tt.fields.messages,
+			}
+			if got := r.Message(); got != tt.want {
+				t.Errorf("Message() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
