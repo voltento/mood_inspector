@@ -15,7 +15,7 @@ type TimeChecker interface {
 func NewTimeProvider(cfg *NotificationCfg) (TimeChecker, error) {
 	var timeProvider TimeChecker
 	if len(cfg.CertainTime) > 0 {
-		timeProvider = &certainTime{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
+		timeProvider = &dailyCertainTime{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
 	}
 
 	if timeProvider == nil {
@@ -25,18 +25,35 @@ func NewTimeProvider(cfg *NotificationCfg) (TimeChecker, error) {
 	return timeProvider, nil
 }
 
-type certainTime struct {
+// This type of timeChecker does not worry about date, only about time of a day
+type dailyCertainTime struct {
 	certainTimes      []time.Time
 	lastProcessedTime *time.Time
 }
 
-func (c *certainTime) CanSendNow(t time.Time) bool {
-	//if c.lastProcessedTime != nil {
-	//
-	//	diff := timeToDurationFromStartOfDay(*c.lastProcessedTime) - timeToDurationFromStartOfDay(t)
-	//	if diff
-	//}
-	panic("not implemented")
+func (c *dailyCertainTime) CanSendNow(t time.Time) bool {
+	testD := timeToDurationFromStartOfDay(t)
+	if c.lastProcessedTime != nil {
+		diff := durationDiffAbs(timeToDurationFromStartOfDay(*c.lastProcessedTime), testD)
+		if diff <= timeFault {
+			return false
+		}
+	}
+
+	for _, suggestedTime := range c.certainTimes {
+		suggestedD := timeToDurationFromStartOfDay(suggestedTime)
+		if suggestedD.Seconds() > testD.Seconds() {
+			continue
+		}
+		if durationDiffAbs(suggestedD, testD) > timeFault {
+			continue
+		}
+
+		c.lastProcessedTime = &t
+		return true
+	}
+
+	return false
 }
 
 func timeToDurationFromStartOfDay(t time.Time) time.Duration {

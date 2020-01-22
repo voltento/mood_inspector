@@ -189,3 +189,99 @@ func Test_durationDiffAbs(t *testing.T) {
 		})
 	}
 }
+
+func Test_certainTime_CanSendNow(t *testing.T) {
+	type fields struct {
+		certainTimes      []time.Time
+		lastProcessedTime *time.Time
+	}
+	type args struct {
+		t time.Time
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "one value ok",
+			fields: fields{
+				certainTimes: []time.Time{time.Date(0, 0, 0, 1, 1, 10, 0, time.Local)},
+			},
+			args: args{
+				t: time.Date(0, 0, 0, 1, 1, 11, 0, time.Local),
+			},
+			want: true,
+		},
+		{
+			name: "one value field: t > expected for 10 s",
+			fields: fields{
+				certainTimes: []time.Time{time.Date(0, 0, 0, 1, 1, 10, 0, time.Local)},
+			},
+			args: args{
+				t: time.Date(0, 0, 0, 1, 1, 21, 0, time.Local),
+			},
+			want: false,
+		},
+		{
+			name: "one value field: t < expected for 10 s",
+			fields: fields{
+				certainTimes: []time.Time{time.Date(2019, 0, 0, 21, 1, 10, 0, time.Local)},
+			},
+			args: args{
+				t: time.Date(0, 0, 5, 1, 1, 10, 0, time.Local),
+			},
+			want: false,
+		},
+		{
+			name: "one value field: t < expected for 1 s",
+			fields: fields{
+				certainTimes: []time.Time{time.Date(1, 0, 0, 21, 1, 21, 0, time.Local)},
+			},
+			args: args{
+				t: time.Date(0, 0, 0, 21, 1, 20, 0, time.Local),
+			},
+			want: false,
+		},
+		{
+			name: "one value field: t < expected for 1 h",
+			fields: fields{
+				certainTimes: []time.Time{time.Date(1, 0, 0, 2, 1, 20, 0, time.Local)},
+			},
+			args: args{
+				t: time.Date(0, 0, 0, 1, 1, 20, 0, time.Local),
+			},
+			want: false,
+		},
+		{
+			name: "two values ok: second ok",
+			fields: fields{
+				certainTimes: []time.Time{
+					time.Date(0, 0, 0, 22, 1, 10, 0, time.Local),
+					time.Date(0, 0, 0, 1, 1, 10, 0, time.Local),
+				},
+			},
+			args: args{
+				t: time.Date(0, 3, 0, 1, 1, 20, 0, time.Local),
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &dailyCertainTime{
+				certainTimes:      tt.fields.certainTimes,
+				lastProcessedTime: tt.fields.lastProcessedTime,
+			}
+			if got := c.CanSendNow(tt.args.t); got != tt.want {
+				t.Errorf("CanSendNow() = %v, want %v", got, tt.want)
+			}
+
+			if resend := c.CanSendNow(tt.args.t); resend {
+				t.Errorf("expected CanSendNow() returns false on second call")
+			}
+		})
+	}
+}
