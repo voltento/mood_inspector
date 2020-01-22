@@ -5,9 +5,17 @@ import (
 	"testing"
 )
 
+func buildMap(ids ...ID) map[ID]struct{} {
+	result := make(map[ID]struct{})
+	for _, id := range ids {
+		result[id] = struct{}{}
+	}
+	return result
+}
+
 func Test_chats_AddChat(t *testing.T) {
 	type expect struct {
-		ids []ID
+		ids map[ID]struct{}
 	}
 	type args struct {
 		ids []ID
@@ -19,27 +27,27 @@ func Test_chats_AddChat(t *testing.T) {
 	}{
 		{
 			name:   "Add value",
-			expect: expect{ids: []ID{1}},
+			expect: expect{ids: buildMap(1)},
 			args:   args{ids: []ID{1}},
 		},
 		{
 			name:   "Add two values",
-			expect: expect{ids: []ID{1, 2}},
+			expect: expect{ids: buildMap(1, 2)},
 			args:   args{ids: []ID{1, 2}},
 		},
 		{
 			name:   "Add three values",
-			expect: expect{ids: []ID{1, 2, 3}},
+			expect: expect{ids: buildMap(1, 2, 3)},
 			args:   args{ids: []ID{1, 2, 3}},
 		},
 		{
 			name:   "Add two double values",
-			expect: expect{ids: []ID{1}},
+			expect: expect{ids: buildMap(1)},
 			args:   args{ids: []ID{1, 1}},
 		},
 		{
 			name:   "Empty",
-			expect: expect{ids: []ID{}},
+			expect: expect{ids: buildMap()},
 			args:   args{ids: []ID{}},
 		},
 	}

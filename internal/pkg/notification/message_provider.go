@@ -34,7 +34,7 @@ type simpleMessageProvider struct {
 	message string
 }
 
-func (s simpleMessageProvider) Message() string {
+func (s *simpleMessageProvider) Message() string {
 	return s.message
 }
 
@@ -42,7 +42,7 @@ type randomMessageProvider struct {
 	messages []string
 }
 
-func (r randomMessageProvider) Message() string {
+func (r *randomMessageProvider) Message() string {
 	i := rand.Int() % len(r.messages)
 	return r.messages[i]
 }

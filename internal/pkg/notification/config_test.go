@@ -33,7 +33,6 @@ func Test_loadReminderConfig(t *testing.T) {
       "name": "simple_reminder",
       "message": "notifications message",
       "random_message": ["message 1", "message 2"],
-      "time": "8:00AM",
       "random_time": {
         "from": "9:00AM",
         "to": "10:00AM",
@@ -47,7 +46,6 @@ func Test_loadReminderConfig(t *testing.T) {
 				Name:          "simple_reminder",
 				Message:       "notifications message",
 				RandomMessage: []string{"message 1", "message 2"},
-				Time:          buildTime("8:00AM"),
 				RandomTime: RandomTimeCfg{
 					From:        buildTime("9:00AM"),
 					To:          buildTime("10:00AM"),

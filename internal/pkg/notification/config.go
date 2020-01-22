@@ -19,7 +19,6 @@ type (
 		Name          string        `json:"name" mapstructure:"name"`
 		Message       string        `json:"message" mapstructure:"message"`
 		RandomMessage []string      `json:"random_message" mapstructure:"random_message"`
-		Time          time.Time     `json:"time" mapstructure:"time"`
 		RandomTime    RandomTimeCfg `json:"random_time" mapstructure:"random_time"`
 		CertainTime   []time.Time   `json:"certain_time" mapstructure:"certain_time"`
 	}
@@ -62,10 +61,6 @@ func (cfg *NotificationCfg) Equal(v *NotificationCfg) bool {
 	}
 
 	if cfg.RandomTime != v.RandomTime {
-		return false
-	}
-
-	if cfg.Time != v.Time {
 		return false
 	}
 
