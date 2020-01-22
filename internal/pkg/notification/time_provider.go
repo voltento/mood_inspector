@@ -2,6 +2,7 @@ package notification
 
 import (
 	"errors"
+	"math"
 	"time"
 )
 
@@ -26,14 +27,26 @@ func NewTimeProvider(cfg *NotificationCfg) (TimeChecker, error) {
 
 type certainTime struct {
 	certainTimes      []time.Time
-	lastProcessedTime time.Time
+	lastProcessedTime *time.Time
 }
 
-func (c *certainTime) CanSendNow(time time.Time) bool {
-	panic("implement me")
+func (c *certainTime) CanSendNow(t time.Time) bool {
+	//if c.lastProcessedTime != nil {
+	//
+	//	diff := timeToDurationFromStartOfDay(*c.lastProcessedTime) - timeToDurationFromStartOfDay(t)
+	//	if diff
+	//}
+	panic("not implemented")
 }
 
 func timeToDurationFromStartOfDay(t time.Time) time.Duration {
 	today := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return t.Sub(today)
+}
+
+func durationDiffAbs(l time.Duration, r time.Duration) time.Duration {
+	const x = time.Nanosecond
+	lMs := int64(l / x)
+	rMs := int64(r / x)
+	return time.Duration(math.Abs(float64(lMs-rMs))) * x
 }

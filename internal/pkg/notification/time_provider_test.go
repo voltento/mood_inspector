@@ -81,3 +81,111 @@ func loadLocationOrPanic(local string) *time.Location {
 	}
 	return l
 }
+
+func Test_durationDiffAbs(t *testing.T) {
+	type args struct {
+		l time.Duration
+		r time.Duration
+	}
+	tests := []struct {
+		name string
+		args args
+		want time.Duration
+	}{
+		{
+			name: "hour l > r",
+			args: args{
+				l: time.Hour * 2,
+				r: time.Hour * 1,
+			},
+			want: time.Hour * 1,
+		},
+		{
+			name: "hour l < r",
+			args: args{
+				l: time.Hour * 2,
+				r: time.Hour * 3,
+			},
+			want: time.Hour * 1,
+		},
+		{
+			name: "minutes l > r",
+			args: args{
+				l: time.Minute * 2,
+				r: time.Minute * 1,
+			},
+			want: time.Minute * 1,
+		},
+		{
+			name: "minutes l < r",
+			args: args{
+				l: time.Minute * 5,
+				r: time.Minute * 1,
+			},
+			want: time.Minute * 4,
+		},
+		{
+			name: "seconds l > r",
+			args: args{
+				l: time.Second * 5,
+				r: time.Second * 3,
+			},
+			want: time.Second * 2,
+		},
+		{
+			name: "seconds l < r",
+			args: args{
+				l: time.Second * 0,
+				r: time.Second * 3,
+			},
+			want: time.Second * 3,
+		},
+		{
+			name: "milliseconds l > r",
+			args: args{
+				l: time.Millisecond * 100,
+				r: time.Millisecond * 1,
+			},
+			want: time.Millisecond * 99,
+		},
+		{
+			name: "milliseconds l < r",
+			args: args{
+				l: time.Millisecond * 3,
+				r: time.Millisecond * 103,
+			},
+			want: time.Millisecond * 100,
+		},
+		{
+			name: "nanoseconds l > r",
+			args: args{
+				l: time.Nanosecond * 100,
+				r: time.Nanosecond * 1,
+			},
+			want: time.Nanosecond * 99,
+		},
+		{
+			name: "nanoseconds l < r",
+			args: args{
+				l: time.Nanosecond * 3,
+				r: time.Nanosecond * 103,
+			},
+			want: time.Nanosecond * 100,
+		},
+		{
+			name: "hour + minutes + seconds l < r",
+			args: args{
+				l: time.Hour + time.Minute*59 + time.Second*60,
+				r: time.Hour * 1,
+			},
+			want: time.Minute * 60,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := durationDiffAbs(tt.args.l, tt.args.r); got != tt.want {
+				t.Errorf("durationDiffAbs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
