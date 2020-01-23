@@ -12,7 +12,7 @@ type TimeChecker interface {
 	CanSendNow(time time.Time) bool
 }
 
-func NewTimeProvider(cfg *NotificationCfg) (TimeChecker, error) {
+func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 	var timeProvider TimeChecker
 	if len(cfg.CertainTime) > 0 {
 		timeProvider = &dailyCertainTime{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
