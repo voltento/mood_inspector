@@ -4,6 +4,7 @@ import (
 	"github.com/voltento/mood_inspector/internal/pkg/notification"
 	"gitlab.mobbtech.com/iqbus/iqbus_go_client/errors"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -162,6 +163,7 @@ func Test_buildConfigFromFile(t *testing.T) {
 			if err != nil {
 				panic(errors.Wrap(err, "can not create a temp file: %v").Error())
 			}
+			defer os.Remove(f.Name())
 
 			if _, err := f.WriteString(tt.args.fileContent); err != nil {
 				panic(errors.Wrap(err, "can not write to the temp file: %v").Error())
