@@ -285,3 +285,49 @@ func Test_certainTime_CanSendNow(t *testing.T) {
 		})
 	}
 }
+
+func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
+	type fields struct {
+		from time.Duration
+		to   time.Duration
+	}
+	type args struct {
+		t time.Duration
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "in",
+			fields: fields{
+				from: time.Hour,
+				to:   time.Hour + time.Minute*30,
+			},
+			args: args{time.Hour + time.Minute*5},
+			want: true,
+		},
+		{
+			name: "out",
+			fields: fields{
+				from: time.Hour,
+				to:   time.Hour + time.Minute*30,
+			},
+			args: args{time.Hour + time.Minute*31},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &dailyRandomTime{
+				from: tt.fields.from,
+				to:   tt.fields.to,
+			}
+			if got := d.inPeriodSendPeriod(tt.args.t); got != tt.want {
+				t.Errorf("inPeriodSendPeriod() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

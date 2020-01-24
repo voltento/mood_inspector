@@ -1,8 +1,9 @@
 package notification
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"math"
+	"math/rand"
 	"time"
 )
 
@@ -18,6 +19,18 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 		timeProvider = &dailyCertainTime{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
 	}
 
+	if cfg.RandomMessage != nil {
+		if timeProvider != nil {
+			return nil, errors.New("several time types provided")
+		}
+
+		if p, err := newDailyRandomTime(cfg); err != nil {
+			return nil, errors.Wrap(err, "can not build random timer")
+		} else {
+			timeProvider = p
+		}
+	}
+
 	if timeProvider == nil {
 		return nil, errors.New("no time provided")
 	}
@@ -25,12 +38,63 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 	return timeProvider, nil
 }
 
-type randomTime struct {
-	config RandomTimeCfg
+type dailyRandomTime struct {
+	doubleCallChecker
+	lastProcessedTime *time.Time
+	nextCallTime      time.Time
+	from              time.Duration
+	to                time.Duration
+	period            time.Duration
+	extraPeriod       time.Duration
 }
 
-func newRandomTime(cfg *NotificationCfg) (*randomTime, error) {
-	randomTimeConfig := *cfg.RandomTime
+func (d *dailyRandomTime) CanSendNow(t time.Time) bool {
+	if d.isDoubleCall(t) {
+		return false
+	}
+
+	testD := timeToDurationFromStartOfDay(t)
+	suggestedD := timeToDurationFromStartOfDay(d.nextCallTime)
+	if suggestedD.Seconds() > testD.Seconds() {
+		return false
+	}
+
+	if durationDiffAbs(suggestedD, testD) > timeFault {
+		return false
+	}
+
+	d.nextCallTime = d.buildNextCallTime()
+
+	d.setLastCallTime(t)
+	return true
+}
+
+func (d *dailyRandomTime) buildNextCallTime() time.Time {
+	nextRand := func(from time.Duration) time.Duration {
+		return time.Duration(time.Duration(rand.Uint64())%d.extraPeriod) + d.period + from
+	}
+
+	newNextCallTime := timeToDurationFromStartOfDay(*d.lastProcessedTime)
+	for i := 0; i < 1000; i += 1 {
+		newNextCallTime := nextRand(newNextCallTime)
+		if d.inPeriodSendPeriod(newNextCallTime) {
+			return time.Date(0, 0, 0, 0, 0, 0, 0, time.Local).Add(newNextCallTime)
+		}
+	}
+
+	return d.nextCallTime
+}
+
+func (d *dailyRandomTime) inPeriodSendPeriod(t time.Duration) bool {
+	if t > d.from && t < d.to {
+		return true
+	}
+
+	return false
+}
+
+func newDailyRandomTime(config *NotificationCfg) (*dailyRandomTime, error) {
+	randomTimeConfig := *config.RandomTime
 	emptyTime := time.Time{}
 	if randomTimeConfig.From == emptyTime {
 		return nil, errors.New("'from' was not set")
@@ -44,25 +108,43 @@ func newRandomTime(cfg *NotificationCfg) (*randomTime, error) {
 		return nil, errors.New("'period' was not set")
 	}
 
-	return &randomTime{config: randomTimeConfig}, nil
+	from := timeToDurationFromStartOfDay(config.RandomTime.From)
+	to := timeToDurationFromStartOfDay(config.RandomTime.To)
+
+	if from < to {
+		return nil, errors.New("wrong arguments in random time provider: from < to")
+	}
+
+	if from-to <= config.RandomTime.Period {
+		return nil, errors.New("wrong arguments in random time provider: period is too big")
+	}
+
+	lastProcessedTime := time.Now().Add(time.Hour * -3)
+	timeCheker := &dailyRandomTime{
+		nextCallTime:      lastProcessedTime,
+		lastProcessedTime: &lastProcessedTime,
+		from:              from,
+		to:                to,
+		period:            config.RandomTime.Period,
+		extraPeriod:       config.RandomTime.ExtraPeriod,
+	}
+	return timeCheker, nil
 }
 
 // This type of timeChecker does not worry about date, only about time of a day
 type dailyCertainTime struct {
+	doubleCallChecker
 	certainTimes      []time.Time
 	lastProcessedTime *time.Time
 }
 
 func (c *dailyCertainTime) CanSendNow(t time.Time) bool {
-	testD := timeToDurationFromStartOfDay(t)
-	if c.lastProcessedTime != nil {
-		diff := durationDiffAbs(timeToDurationFromStartOfDay(*c.lastProcessedTime), testD)
-		if diff <= timeFault {
-			return false
-		}
+	if c.isDoubleCall(t) {
+		return false
 	}
 
 	for _, suggestedTime := range c.certainTimes {
+		testD := timeToDurationFromStartOfDay(t)
 		suggestedD := timeToDurationFromStartOfDay(suggestedTime)
 		if suggestedD.Seconds() > testD.Seconds() {
 			continue
@@ -71,7 +153,7 @@ func (c *dailyCertainTime) CanSendNow(t time.Time) bool {
 			continue
 		}
 
-		c.lastProcessedTime = &t
+		c.setLastCallTime(t)
 		return true
 	}
 
