@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gitlab.mobbtech.com/iqbus/iqbus_go_client/errors"
 	"log"
 	"math/rand"
 	"time"
@@ -10,6 +11,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
 	"github.com/voltento/mood_inspector/internal/pkg"
+	"github.com/voltento/mood_inspector/internal/pkg/notification"
 )
 
 const (
@@ -23,9 +25,10 @@ const (
 )
 
 type App struct {
-	db       pkg.DataBase
-	chatsMgr pkg.ChatsMgr
-	bot      *tgbotapi.BotAPI
+	db            pkg.DataBase
+	chatsMgr      pkg.ChatsMgr
+	bot           *tgbotapi.BotAPI
+	notifications []notification.Notification
 }
 
 func main() {
@@ -61,7 +64,29 @@ func NewApp(config *pkg.Config) *App {
 
 	db := pkg.NewDatabase()
 	chatsMgr := pkg.NewChatsMgr(db, bot)
-	return &App{db: db, bot: bot, chatsMgr: chatsMgr}
+	notifications, err := NewNotifications(config)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	return &App{
+		db:            db,
+		bot:           bot,
+		chatsMgr:      chatsMgr,
+		notifications: notifications,
+	}
+}
+
+func NewNotifications(config *pkg.Config) ([]notification.Notification, error) {
+	result := make([]notification.Notification, 0, len(config.Notifications))
+	for _, notificationCfg := range config.Notifications {
+		n, err := notification.NewNotification(&notificationCfg)
+		if err != nil {
+			return nil, errors.Wrap(err, "can not creat notification from %v")
+		}
+		result = append(result, n)
+	}
+	return result, nil
 }
 
 func (app *App) Run() {
