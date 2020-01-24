@@ -3,12 +3,11 @@
     "id": <id_string>,
     "secret": <secret_string>
   },
-  "reminders": [
+  "notifications": [
     {
       "name": "simple_reminder",
       "message": "notifications message",
       "random_message": ["message 1", "message 2"],
-      "time": "8:00AM",
       "random_time": {
         "from": "9:00AM",
         "to": "10:00AM",
