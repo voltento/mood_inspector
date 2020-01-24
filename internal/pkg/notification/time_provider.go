@@ -25,6 +25,28 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 	return timeProvider, nil
 }
 
+type randomTime struct {
+	config RandomTimeCfg
+}
+
+func newRandomTime(cfg *NotificationCfg) (*randomTime, error) {
+	randomTimeConfig := *cfg.RandomTime
+	emptyTime := time.Time{}
+	if randomTimeConfig.From == emptyTime {
+		return nil, errors.New("'from' was not set")
+	}
+
+	if randomTimeConfig.To == emptyTime {
+		return nil, errors.New("'to' was not set")
+	}
+
+	if randomTimeConfig.Period == 0 {
+		return nil, errors.New("'period' was not set")
+	}
+
+	return &randomTime{config: randomTimeConfig}, nil
+}
+
 // This type of timeChecker does not worry about date, only about time of a day
 type dailyCertainTime struct {
 	certainTimes      []time.Time

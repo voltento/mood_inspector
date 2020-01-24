@@ -116,7 +116,7 @@ func Test_buildConfigFromFile(t *testing.T) {
 		{
 			name: "random_time",
 			want: &Config{Notifications: []notification.NotificationCfg{{
-				RandomTime: notification.RandomTimeCfg{
+				RandomTime: &notification.RandomTimeCfg{
 					From:        loadKitckenTimeOrPanic("8:29AM"),
 					To:          loadKitckenTimeOrPanic("1:39PM"),
 					Period:      time.Hour + time.Minute*15,

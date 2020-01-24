@@ -46,7 +46,7 @@ func Test_loadReminderConfig(t *testing.T) {
 				Name:          "simple_reminder",
 				Message:       "notifications message",
 				RandomMessage: []string{"message 1", "message 2"},
-				RandomTime: RandomTimeCfg{
+				RandomTime: &RandomTimeCfg{
 					From:        buildTime("9:00AM"),
 					To:          buildTime("10:00AM"),
 					Period:      time.Hour,

@@ -16,11 +16,11 @@ type (
 	}
 
 	NotificationCfg struct {
-		Name          string        `json:"name" mapstructure:"name"`
-		Message       string        `json:"message" mapstructure:"message"`
-		RandomMessage []string      `json:"random_message" mapstructure:"random_message"`
-		RandomTime    RandomTimeCfg `json:"random_time" mapstructure:"random_time"`
-		CertainTime   []time.Time   `json:"certain_time" mapstructure:"certain_time"`
+		Name          string         `json:"name" mapstructure:"name"`
+		Message       string         `json:"message" mapstructure:"message"`
+		RandomMessage []string       `json:"random_message" mapstructure:"random_message"`
+		RandomTime    *RandomTimeCfg `json:"random_time" mapstructure:"random_time"`
+		CertainTime   []time.Time    `json:"certain_time" mapstructure:"certain_time"`
 	}
 )
 
@@ -60,7 +60,7 @@ func (cfg *NotificationCfg) Equal(v *NotificationCfg) bool {
 		return false
 	}
 
-	if cfg.RandomTime != v.RandomTime {
+	if !reflect.DeepEqual(cfg.RandomTime, v.RandomTime) {
 		return false
 	}
 
