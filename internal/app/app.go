@@ -14,13 +14,7 @@ import (
 )
 
 const (
-	GREETING_MSG = "!I'll be tracking you"
-	REMIND_MSG   = `1. What are you filling now?
-2. Why are you filling this emotion?
-3. What do you want now?
-4. Why do you want it?
-5. Which emotions do you need to get the goal?
-6. How to transit yourself to these emotions?`
+	GREETING_MSG = "I'll be tracking you"
 )
 
 type App struct {
@@ -113,7 +107,7 @@ func (a *App) Run() {
 
 				log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
-				text := fmt.Sprintf("%v\nYou will recieve this messages several times a day: \n%v", GREETING_MSG, REMIND_MSG)
+				text := fmt.Sprintf("%v\nYou will recieve messages several times a day: \n%v", GREETING_MSG)
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 
 				if _, er := a.bot.Send(msg); er != nil {
