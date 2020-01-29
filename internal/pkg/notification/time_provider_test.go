@@ -477,3 +477,87 @@ func Test_newDailyRandomTime(t *testing.T) {
 		})
 	}
 }
+
+func Test_dailyRandomTime_CanSendNow(t *testing.T) {
+	type fields struct {
+		lastProcessedTime pkg.TimeOfDay
+		nextCallTime      pkg.TimeOfDay
+		from              time.Duration
+		to                time.Duration
+		period            time.Duration
+		extraPeriod       time.Duration
+	}
+	type args struct {
+		t time.Time
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "ok",
+			fields: fields{
+				lastProcessedTime: fromNow(-time.Second * 20),
+				nextCallTime:      fromNow(-time.Second * 1),
+				from:              fromNowDuration(-time.Hour * 1),
+				to:                fromNowDuration(time.Hour * 1),
+				period:            time.Minute,
+			},
+			args: args{time.Now()},
+			want: true,
+		},
+		{
+			name: "to early",
+			fields: fields{
+				lastProcessedTime: fromNow(-time.Second * 20),
+				nextCallTime:      fromNow(-time.Second * 1),
+				from:              fromNowDuration(-time.Hour * 1),
+				to:                fromNowDuration(time.Hour * 1),
+				period:            time.Minute,
+			},
+			args: args{time.Now().Add(-time.Second * 12)},
+			want: false,
+		},
+		{
+			name: "to late",
+			fields: fields{
+				lastProcessedTime: fromNow(-time.Second * 20),
+				nextCallTime:      fromNow(-time.Second * 1),
+				from:              fromNowDuration(-time.Hour * 1),
+				to:                fromNowDuration(time.Hour * 1),
+				period:            time.Minute,
+			},
+			args: args{time.Now().Add(time.Second * 12)},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &dailyRandomTime{
+				lastProcessedTime: tt.fields.lastProcessedTime,
+				nextCallTime:      tt.fields.nextCallTime,
+				from:              tt.fields.from,
+				to:                tt.fields.to,
+				period:            tt.fields.period,
+				extraPeriod:       tt.fields.extraPeriod,
+			}
+			if got := d.CanSendNow(tt.args.t); got != tt.want {
+				t.Errorf("CanSendNow() = %v, want %v", got, tt.want)
+			}
+			if d.CanSendNow(tt.args.t) {
+				t.Errorf("CanSendNow() returned true on double call ")
+			}
+		})
+	}
+}
+
+func fromNow(d time.Duration) pkg.TimeOfDay {
+	return pkg.NewTimeOfDayFromTime(time.Now()).Add(d)
+}
+
+func fromNowDuration(d time.Duration) time.Duration {
+	t := fromNow(d)
+	return t.Get()
+}
