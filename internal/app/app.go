@@ -3,29 +3,26 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gitlab.mobbtech.com/iqbus/iqbus_go_client/errors"
 	"log"
-	"math/rand"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
 	"github.com/voltento/mood_inspector/internal/pkg"
+	"github.com/voltento/mood_inspector/internal/pkg/notification"
 )
 
 const (
 	GREETING_MSG = "I'll be tracking you"
-	REMIND_MSG   = `1. What are you filling now?
-2. Why are you filling this emotion?
-3. What do you want now?
-4. Why do you want it?
-5. Which emotions do you need to get the goal?
-6. How to transit yourself to these emotions?`
 )
 
 type App struct {
-	db       pkg.DataBase
-	chatsMgr pkg.ChatsMgr
-	bot      *tgbotapi.BotAPI
+	db            pkg.DataBase
+	chatsMgr      pkg.ChatsMgr
+	bot           *tgbotapi.BotAPI
+	notifications []notification.Notification
+	sender        notification.Sender
 }
 
 func main() {
@@ -54,46 +51,66 @@ func NewApp(config *pkg.Config) *App {
 		log.Panic(err)
 	}
 
-	bot.Debug = true
+	bot.Debug = false
 	bot.Self = tgbotapi.User{ID: 867251407, IsBot: true}
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	db := pkg.NewDatabase()
 	chatsMgr := pkg.NewChatsMgr(db, bot)
-	return &App{db: db, bot: bot, chatsMgr: chatsMgr}
+	notifications, err := NewNotifications(config)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	return &App{
+		db:            db,
+		bot:           bot,
+		chatsMgr:      chatsMgr,
+		notifications: notifications,
+		sender:        &sender{chatsMgr},
+	}
 }
 
-func (app *App) Run() {
+func NewNotifications(config *pkg.Config) ([]notification.Notification, error) {
+	result := make([]notification.Notification, 0, len(config.Notifications))
+	for _, notificationCfg := range config.Notifications {
+		n, err := notification.NewNotification(&notificationCfg)
+		if err != nil {
+			return nil, errors.Wrap(err, "can not creat notification from %v")
+		}
+		result = append(result, n)
+	}
+	return result, nil
+}
+
+func (a *App) Run() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	updates, err := app.bot.GetUpdatesChan(u)
+	updates, err := a.bot.GetUpdatesChan(u)
 
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	timeoutChan := time.After(getReminderTimeout())
+	const tick = time.Second
 
 	for {
 		select {
-		case <-timeoutChan:
-			timeoutChan = time.After(getReminderTimeout())
-			if appropriateTime() {
-				app.chatsMgr.SendMsgToAll(REMIND_MSG)
-			}
+		case <-time.After(tick):
+			a.ProcessSendTick()
 
 		case update := <-updates:
 			if update.Message != nil { // ignore any non-Message Updates
-				app.db.Chats.AddChat(pkg.ID(update.Message.Chat.ID))
+				a.db.Chats.AddChat(pkg.ID(update.Message.Chat.ID))
 
 				log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
-				text := fmt.Sprintf("%v\nYou will recieve this messages several times a day: \n%v", GREETING_MSG, REMIND_MSG)
+				text := fmt.Sprintf("%v\nYou will recieve messages several times a day: \n%v", GREETING_MSG)
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 
-				if _, er := app.bot.Send(msg); er != nil {
+				if _, er := a.bot.Send(msg); er != nil {
 					log.Println(er.Error())
 				}
 			}
@@ -101,13 +118,17 @@ func (app *App) Run() {
 	}
 }
 
-func appropriateTime() bool {
-	now := time.Now().Hour()
-	return now > 7 && now < 18
+func (a *App) ProcessSendTick() {
+	now := time.Now()
+	for _, n := range a.notifications {
+		n.SendIfNeed(now, a.sender)
+	}
 }
 
-func getReminderTimeout() time.Duration {
-	const timeout = time.Hour * 1
-	floatTimeoutPart := time.Duration(uint64(time.Minute) * (rand.Uint64() % 60))
-	return timeout + floatTimeoutPart
+type sender struct {
+	mgr pkg.ChatsMgr
+}
+
+func (s *sender) Send(msg string) {
+	s.mgr.SendMsgToAll(msg)
 }

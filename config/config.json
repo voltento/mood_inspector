@@ -2,5 +2,19 @@
   "telegram_bot": {
     "id": <id_string>,
     "secret": <secret_string>
-  }
+  },
+  "notifications": [
+    {
+      "name": "simple_reminder",
+      "message": "notifications message",
+      "random_message": ["message 1", "message 2"],
+      "random_time": {
+        "from": "9:00AM",
+        "to": "10:00AM",
+        "period": "1h",
+        "extra_period": "30m"
+      },
+      "certain_time": ["10:00AM"]
+    }
+  ]
 }

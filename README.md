@@ -7,3 +7,6 @@ Bot-reminder
 `./app --config <path_to_config>`
 
 Watch `config/config.json` as a config example.
+
+## Test
+` go test ./...`
