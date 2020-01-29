@@ -2,6 +2,7 @@ package notification
 
 import (
 	"github.com/pkg/errors"
+	"github.com/voltento/mood_inspector/pkg"
 	"math"
 	"math/rand"
 	"time"
@@ -40,8 +41,8 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 
 type dailyRandomTime struct {
 	doubleCallChecker
-	lastProcessedTime *time.Time
-	nextCallTime      time.Time
+	lastProcessedTime pkg.TimeOfDay
+	nextCallTime      pkg.TimeOfDay
 	from              time.Duration
 	to                time.Duration
 	period            time.Duration
@@ -53,19 +54,21 @@ func (d *dailyRandomTime) CanSendNow(t time.Time) bool {
 		return false
 	}
 
-	testD := timeToDurationFromStartOfDay(t)
-	suggestedD := timeToDurationFromStartOfDay(d.nextCallTime)
-	if suggestedD.Seconds() > testD.Seconds() {
+	testTime := pkg.NewTimeOfDayFromTime(t)
+
+	if d.nextCallTime.Get() > testTime.Get() {
 		return false
 	}
 
-	if durationDiffAbs(suggestedD, testD) > timeFault {
+	diff := d.nextCallTime.Get().Nanoseconds() - testTime.Get().Nanoseconds()
+
+	if diffSeconds := time.Duration(math.Abs(float64(diff))); diffSeconds > timeFault {
 		return false
 	}
-
-	d.nextCallTime = d.buildNextCallTime()
 
 	d.setLastCallTime(t)
+	d.nextCallTime = d.buildNextCallTime(testTime)
+
 	return true
 }
 
@@ -89,31 +92,27 @@ func (d *dailyRandomTime) Equal(r *dailyRandomTime) bool {
 	return true
 }
 
-func (d *dailyRandomTime) buildNextCallTime() time.Time {
-	nextRand := func(from time.Duration) time.Duration {
-		nextTime := d.period + from
+func (d *dailyRandomTime) buildNextCallTime(newNextCallTime pkg.TimeOfDay) pkg.TimeOfDay {
+	nextRand := func(from pkg.TimeOfDay) pkg.TimeOfDay {
+		nextTime := from.Add(d.period)
 		if d.extraPeriod != 0 {
-			nextTime += d.extraPeriod % time.Duration(rand.Uint64())
+			nextTime = nextTime.Add(d.extraPeriod % time.Duration(rand.Uint64()))
 		}
 		return nextTime
 	}
 
-	newNextCallTime := timeToDurationFromStartOfDay(*d.lastProcessedTime)
 	for i := 0; i < 1000; i += 1 {
 		newNextCallTime = nextRand(newNextCallTime)
 		if d.inPeriodSendPeriod(newNextCallTime) {
-			return time.Date(0, 0, 0, 0, 0, 0, 0, time.Local).Add(newNextCallTime)
+			return newNextCallTime
 		}
 	}
 
-	return d.nextCallTime
+	return pkg.NewTimeOfDayFromTime(time.Now())
 }
 
-func (d *dailyRandomTime) inPeriodSendPeriod(t time.Duration) bool {
-	if cutDayVal := t - time.Hour*24; cutDayVal > 0 {
-		t = cutDayVal
-	}
-	if t > d.from && t < d.to {
+func (d *dailyRandomTime) inPeriodSendPeriod(t pkg.TimeOfDay) bool {
+	if t.Get().Nanoseconds() > d.from.Nanoseconds() && t.Get().Nanoseconds() < d.to.Nanoseconds() {
 		return true
 	}
 
@@ -146,15 +145,15 @@ func newDailyRandomTime(config *NotificationCfg) (*dailyRandomTime, error) {
 		return nil, errors.New("wrong arguments in random time provider: period is too big")
 	}
 
-	lastProcessedTime := time.Now().Add(time.Hour * -3)
+	lastProcessedTime := time.Now().Add(-config.RandomTime.ExtraPeriod)
 	timeCheker := &dailyRandomTime{
-		nextCallTime:      lastProcessedTime,
-		lastProcessedTime: &lastProcessedTime,
+		lastProcessedTime: pkg.NewTimeOfDayFromTime(lastProcessedTime),
 		from:              from,
 		to:                to,
 		period:            config.RandomTime.Period,
 		extraPeriod:       config.RandomTime.ExtraPeriod,
 	}
+	timeCheker.nextCallTime = timeCheker.buildNextCallTime(pkg.NewTimeOfDayFromTime(time.Now()))
 	return timeCheker, nil
 }
 

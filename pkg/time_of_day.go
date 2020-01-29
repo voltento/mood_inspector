@@ -6,6 +6,15 @@ type TimeOfDay struct {
 	t time.Duration
 }
 
+func NewTimeOfDayFromTime(t time.Time) TimeOfDay {
+	d := time.Hour * time.Duration(t.Hour())
+	d += time.Minute * time.Duration(t.Minute())
+	d += time.Second * time.Duration(t.Second())
+	d += time.Nanosecond * time.Duration(t.Nanosecond())
+
+	return NewTimeOfDay(d)
+}
+
 func NewTimeOfDay(t time.Duration) TimeOfDay {
 	r := TimeOfDay{}
 	r.Set(t)
