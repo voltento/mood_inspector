@@ -71,12 +71,16 @@ func (d *dailyRandomTime) CanSendNow(t time.Time) bool {
 
 func (d *dailyRandomTime) buildNextCallTime() time.Time {
 	nextRand := func(from time.Duration) time.Duration {
-		return time.Duration(time.Duration(rand.Uint64())%d.extraPeriod) + d.period + from
+		nextTime := d.period + from
+		if d.extraPeriod != 0 {
+			nextTime += d.extraPeriod % time.Duration(rand.Uint64())
+		}
+		return nextTime
 	}
 
 	newNextCallTime := timeToDurationFromStartOfDay(*d.lastProcessedTime)
 	for i := 0; i < 1000; i += 1 {
-		newNextCallTime := nextRand(newNextCallTime)
+		newNextCallTime = nextRand(newNextCallTime)
 		if d.inPeriodSendPeriod(newNextCallTime) {
 			return time.Date(0, 0, 0, 0, 0, 0, 0, time.Local).Add(newNextCallTime)
 		}
@@ -86,6 +90,9 @@ func (d *dailyRandomTime) buildNextCallTime() time.Time {
 }
 
 func (d *dailyRandomTime) inPeriodSendPeriod(t time.Duration) bool {
+	if cutDayVal := t - time.Hour*24; cutDayVal > 0 {
+		t = cutDayVal
+	}
 	if t > d.from && t < d.to {
 		return true
 	}

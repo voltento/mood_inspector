@@ -331,3 +331,54 @@ func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
 		})
 	}
 }
+
+func Test_dailyRandomTime_buildNextCallTime(t *testing.T) {
+	type fields struct {
+		lastProcessedTime *time.Time
+		nextCallTime      time.Time
+		from              time.Duration
+		to                time.Duration
+		period            time.Duration
+		extraPeriod       time.Duration
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "ok",
+			fields: fields{
+				lastProcessedTime: now(),
+				nextCallTime:      time.Now().Add(time.Hour * -3),
+				from:              time.Hour * 1,
+				to:                time.Hour * 2,
+				period:            time.Minute * 30,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &dailyRandomTime{
+				lastProcessedTime: tt.fields.lastProcessedTime,
+				nextCallTime:      tt.fields.nextCallTime,
+				from:              tt.fields.from,
+				to:                tt.fields.to,
+				period:            tt.fields.period,
+				extraPeriod:       tt.fields.extraPeriod,
+			}
+
+			for i := 0; i < 100; i += 1 {
+				got := d.buildNextCallTime()
+				newTime := timeToDurationFromStartOfDay(got)
+				if in := d.inPeriodSendPeriod(newTime); !in {
+					t.Errorf("buildNextCallTime() produced time not in the range. Time: %v range %v:%v", newTime, d.from, d.to)
+				}
+			}
+		})
+	}
+}
+
+func now() *time.Time {
+	t := time.Now()
+	return &t
+}
