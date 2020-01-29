@@ -19,7 +19,7 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 		timeProvider = &dailyCertainTime{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
 	}
 
-	if cfg.RandomMessage != nil {
+	if cfg.RandomTime != nil {
 		if timeProvider != nil {
 			return nil, errors.New("several time types provided")
 		}
@@ -66,6 +66,26 @@ func (d *dailyRandomTime) CanSendNow(t time.Time) bool {
 	d.nextCallTime = d.buildNextCallTime()
 
 	d.setLastCallTime(t)
+	return true
+}
+
+func (d *dailyRandomTime) Equal(r *dailyRandomTime) bool {
+	if d.from != r.from {
+		return false
+	}
+
+	if d.to != r.to {
+		return false
+	}
+
+	if d.period != r.period {
+		return false
+	}
+
+	if d.extraPeriod != r.extraPeriod {
+		return false
+	}
+
 	return true
 }
 
@@ -118,11 +138,11 @@ func newDailyRandomTime(config *NotificationCfg) (*dailyRandomTime, error) {
 	from := timeToDurationFromStartOfDay(config.RandomTime.From)
 	to := timeToDurationFromStartOfDay(config.RandomTime.To)
 
-	if from < to {
+	if from > to {
 		return nil, errors.New("wrong arguments in random time provider: from < to")
 	}
 
-	if from-to <= config.RandomTime.Period {
+	if to-from <= config.RandomTime.Period {
 		return nil, errors.New("wrong arguments in random time provider: period is too big")
 	}
 

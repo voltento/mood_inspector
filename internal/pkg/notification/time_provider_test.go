@@ -382,3 +382,103 @@ func now() *time.Time {
 	t := time.Now()
 	return &t
 }
+
+func Test_newDailyRandomTime(t *testing.T) {
+	type args struct {
+		config *NotificationCfg
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *dailyRandomTime
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			args: args{config: &NotificationCfg{
+				Name:    "a",
+				Message: "msg",
+				RandomTime: &RandomTimeCfg{
+					From:        buildTime("1:15AM"),
+					To:          buildTime("7:00PM"),
+					Period:      time.Minute,
+					ExtraPeriod: time.Minute,
+				},
+			}},
+			want: &dailyRandomTime{
+				from:        time.Hour + time.Minute*15,
+				to:          time.Hour * 19,
+				period:      time.Minute,
+				extraPeriod: time.Minute,
+			},
+			wantErr: false,
+		},
+		{
+			name: "from > to",
+			args: args{config: &NotificationCfg{
+				RandomTime: &RandomTimeCfg{
+					From: buildTime("7:00PM"),
+					To:   buildTime("1:15AM"),
+				},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "period is to big",
+			args: args{config: &NotificationCfg{
+				RandomTime: &RandomTimeCfg{
+					From:   buildTime("7:00PM"),
+					To:     buildTime("8:15PM"),
+					Period: time.Hour + time.Minute*16,
+				},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "no from",
+			args: args{config: &NotificationCfg{
+				RandomTime: &RandomTimeCfg{
+					To:     buildTime("8:15PM"),
+					Period: time.Hour + time.Minute*16,
+				},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "no to",
+			args: args{config: &NotificationCfg{
+				RandomTime: &RandomTimeCfg{
+					From:   buildTime("8:15PM"),
+					Period: time.Hour + time.Minute*16,
+				},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "no period",
+			args: args{config: &NotificationCfg{
+				RandomTime: &RandomTimeCfg{
+					From: buildTime("8:15PM"),
+					To:   buildTime("10:15PM"),
+				},
+			}},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := newDailyRandomTime(tt.args.config)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newDailyRandomTime() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+
+			if !tt.want.Equal(got) {
+				t.Errorf("newDailyRandomTime() \ngot  = %v, \nwant %v", got, tt.want)
+			}
+		})
+	}
+}
