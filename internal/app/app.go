@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gitlab.mobbtech.com/iqbus/iqbus_go_client/errors"
+	"github.com/voltento/mood_inspector/pkg/errorswrp"
+
 	"log"
 	"time"
 
@@ -77,7 +78,7 @@ func NewNotifications(config *pkg.Config) ([]notification.Notification, error) {
 	for _, notificationCfg := range config.Notifications {
 		n, err := notification.NewNotification(&notificationCfg)
 		if err != nil {
-			return nil, errors.Wrap(err, "can not creat notification from %v")
+			return nil, errorswrp.Wrap(err, "can not creat notification from %v")
 		}
 		result = append(result, n)
 	}
@@ -107,7 +108,7 @@ func (a *App) Run() {
 
 				log.Printf("[%v %v] %v", update.Message.From.FirstName, update.Message.From.LastName, update.Message.Text)
 
-				text := fmt.Sprintf("%v\nYou will recieve messages several times a day: \n%v", GREETING_MSG)
+				text := fmt.Sprintf("%v\n", GREETING_MSG)
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
 
 				if _, er := a.bot.Send(msg); er != nil {

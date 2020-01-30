@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"github.com/voltento/mood_inspector/internal/pkg/notification"
-	"gitlab.mobbtech.com/iqbus/iqbus_go_client/errors"
+	"github.com/voltento/mood_inspector/pkg/errorswrp"
+
 	"log"
 )
 
@@ -41,12 +42,12 @@ func buildConfigFromFile(path string) (*Config, error) {
 	viper.SetConfigType("json")
 	viper.SetConfigFile(path)
 	if er := viper.ReadInConfig(); er != nil {
-		return nil, errors.Wrap(er, fmt.Sprintf("can not load config from the file %v", path))
+		return nil, errorswrp.Wrap(er, fmt.Sprintf("can not load config from the file %v", path))
 	}
 
 	cfg := &Config{}
 	if er := viper.Unmarshal(cfg, notification.DecoderConfigOptions()); er != nil {
-		return nil, errors.Wrap(er, fmt.Sprintf("can not unmarshal config from the file %v", path))
+		return nil, errorswrp.Wrap(er, fmt.Sprintf("can not unmarshal config from the file %v", path))
 	}
 	return cfg, nil
 }

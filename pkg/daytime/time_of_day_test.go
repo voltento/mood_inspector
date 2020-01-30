@@ -1,4 +1,4 @@
-package pkg
+package daytime
 
 import (
 	"reflect"
@@ -39,9 +39,9 @@ func TestNewTimeOfDay(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			timeOfDay := NewTimeOfDay(tt.args.t)
+			timeOfDay := NewDayTime(tt.args.t)
 			if got := timeOfDay.Get(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewTimeOfDay() = %v, want %v", got, tt.want)
+				t.Errorf("NewDayTime() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -1,7 +1,7 @@
 package notification
 
 import (
-	"github.com/voltento/mood_inspector/pkg"
+	"github.com/voltento/mood_inspector/pkg/daytime"
 	"testing"
 	"time"
 )
@@ -293,7 +293,7 @@ func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
 		to   time.Duration
 	}
 	type args struct {
-		t pkg.TimeOfDay
+		t daytime.DayTime
 	}
 	tests := []struct {
 		name   string
@@ -307,7 +307,7 @@ func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
 				from: time.Hour,
 				to:   time.Hour + time.Minute*30,
 			},
-			args: args{pkg.NewTimeOfDay(time.Hour + time.Minute*5)},
+			args: args{daytime.NewDayTime(time.Hour + time.Minute*5)},
 			want: true,
 		},
 		{
@@ -316,7 +316,7 @@ func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
 				from: time.Hour,
 				to:   time.Hour + time.Minute*30,
 			},
-			args: args{pkg.NewTimeOfDay(time.Hour + time.Minute*31)},
+			args: args{daytime.NewDayTime(time.Hour + time.Minute*31)},
 			want: false,
 		},
 	}
@@ -335,8 +335,8 @@ func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
 
 func Test_dailyRandomTime_buildNextCallTime(t *testing.T) {
 	type fields struct {
-		lastProcessedTime pkg.TimeOfDay
-		nextCallTime      pkg.TimeOfDay
+		lastProcessedTime daytime.DayTime
+		nextCallTime      daytime.DayTime
 		from              time.Duration
 		to                time.Duration
 		period            time.Duration
@@ -349,8 +349,8 @@ func Test_dailyRandomTime_buildNextCallTime(t *testing.T) {
 		{
 			name: "ok",
 			fields: fields{
-				lastProcessedTime: pkg.NewTimeOfDayFromTime(time.Now()),
-				nextCallTime:      pkg.NewTimeOfDayFromTime(time.Now().Add(time.Hour * -3)),
+				lastProcessedTime: daytime.NewDayTimeFromTime(time.Now()),
+				nextCallTime:      daytime.NewDayTimeFromTime(time.Now().Add(time.Hour * -3)),
 				from:              time.Hour * 1,
 				to:                time.Hour * 2,
 				period:            time.Minute * 30,
@@ -369,7 +369,7 @@ func Test_dailyRandomTime_buildNextCallTime(t *testing.T) {
 			}
 
 			for i := 0; i < 100; i += 1 {
-				got := d.buildNextCallTime(pkg.NewTimeOfDayFromTime(time.Now()))
+				got := d.buildNextCallTime(daytime.NewDayTimeFromTime(time.Now()))
 				if in := d.inPeriodSendPeriod(got); !in {
 					t.Errorf("buildNextCallTime() produced time not in the range. Time: %v range %v:%v", got, d.from, d.to)
 				}
@@ -480,8 +480,8 @@ func Test_newDailyRandomTime(t *testing.T) {
 
 func Test_dailyRandomTime_CanSendNow(t *testing.T) {
 	type fields struct {
-		lastProcessedTime pkg.TimeOfDay
-		nextCallTime      pkg.TimeOfDay
+		lastProcessedTime daytime.DayTime
+		nextCallTime      daytime.DayTime
 		from              time.Duration
 		to                time.Duration
 		period            time.Duration
@@ -553,8 +553,8 @@ func Test_dailyRandomTime_CanSendNow(t *testing.T) {
 	}
 }
 
-func fromNow(d time.Duration) pkg.TimeOfDay {
-	return pkg.NewTimeOfDayFromTime(time.Now()).Add(d)
+func fromNow(d time.Duration) daytime.DayTime {
+	return daytime.NewDayTimeFromTime(time.Now()).Add(d)
 }
 
 func fromNowDuration(d time.Duration) time.Duration {
