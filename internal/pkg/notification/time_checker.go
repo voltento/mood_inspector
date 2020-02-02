@@ -97,7 +97,7 @@ func (d *dailyRandomTimeChecker) buildNextCallTime(newNextCallTime daytime.DayTi
 	nextRand := func(from daytime.DayTime) daytime.DayTime {
 		nextTime := from.Add(d.period)
 		if d.extraPeriod != 0 {
-			nextTime = nextTime.Add(d.extraPeriod % time.Duration(rand.Uint64()))
+			nextTime = nextTime.Add(time.Duration(rand.Uint64()) % d.extraPeriod)
 		}
 		return nextTime
 	}
