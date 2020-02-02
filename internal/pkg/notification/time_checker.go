@@ -1,19 +1,17 @@
 package notification
 
 import (
-	"github.com/pkg/errors"
 	"github.com/voltento/mood_inspector/pkg/daytime"
 	"github.com/voltento/mood_inspector/pkg/errorswrp"
+
+	"github.com/pkg/errors"
+
 	"math"
 	"math/rand"
 	"time"
 )
 
 const timeFault = time.Second * 10
-
-type TimeChecker interface {
-	Check(time time.Time) bool
-}
 
 func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 	var timeProvider TimeChecker

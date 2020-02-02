@@ -5,14 +5,6 @@ import (
 	"time"
 )
 
-type Sender interface {
-	Send(msg string)
-}
-
-type Notification interface {
-	SendIfNeed(t time.Time, s Sender)
-}
-
 type notification struct {
 	timeChecker TimeChecker
 	msgProvider MessageProvider

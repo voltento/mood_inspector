@@ -5,10 +5,6 @@ import (
 	"math/rand"
 )
 
-type MessageProvider interface {
-	Message() string
-}
-
 func NewMessageProvider(cfg *NotificationCfg) (MessageProvider, error) {
 	var messageProvider MessageProvider
 	if len(cfg.Message) > 0 {
