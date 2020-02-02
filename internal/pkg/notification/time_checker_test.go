@@ -272,16 +272,16 @@ func Test_certainTime_CanSendNow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &dailyCertainTime{
+			c := &dailyCertainTimeChecker{
 				certainTimes:      tt.fields.certainTimes,
 				lastProcessedTime: tt.fields.lastProcessedTime,
 			}
-			if got := c.CanSendNow(tt.args.t); got != tt.want {
-				t.Errorf("CanSendNow() = %v, want %v", got, tt.want)
+			if got := c.Check(tt.args.t); got != tt.want {
+				t.Errorf("Check() = %v, want %v", got, tt.want)
 			}
 
-			if resend := c.CanSendNow(tt.args.t); resend {
-				t.Errorf("expected CanSendNow() returns false on second call")
+			if resend := c.Check(tt.args.t); resend {
+				t.Errorf("expected Check() returns false on second call")
 			}
 		})
 	}
@@ -322,7 +322,7 @@ func Test_dailyRandomTime_inPeriodSendPeriod(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &dailyRandomTime{
+			d := &dailyRandomTimeChecker{
 				from: tt.fields.from,
 				to:   tt.fields.to,
 			}
@@ -359,7 +359,7 @@ func Test_dailyRandomTime_buildNextCallTime(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &dailyRandomTime{
+			d := &dailyRandomTimeChecker{
 				lastProcessedTime: tt.fields.lastProcessedTime,
 				nextCallTime:      tt.fields.nextCallTime,
 				from:              tt.fields.from,
@@ -385,7 +385,7 @@ func Test_newDailyRandomTime(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *dailyRandomTime
+		want    *dailyRandomTimeChecker
 		wantErr bool
 	}{
 		{
@@ -400,7 +400,7 @@ func Test_newDailyRandomTime(t *testing.T) {
 					ExtraPeriod: time.Minute,
 				},
 			}},
-			want: &dailyRandomTime{
+			want: &dailyRandomTimeChecker{
 				from:        time.Hour + time.Minute*15,
 				to:          time.Hour * 19,
 				period:      time.Minute,
@@ -462,9 +462,9 @@ func Test_newDailyRandomTime(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newDailyRandomTime(tt.args.config)
+			got, err := newDailyRandomTimeChecker(tt.args.config)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("newDailyRandomTime() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("newDailyRandomTimeChecker() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr {
@@ -472,7 +472,7 @@ func Test_newDailyRandomTime(t *testing.T) {
 			}
 
 			if !tt.want.Equal(got) {
-				t.Errorf("newDailyRandomTime() \ngot  = %v, \nwant %v", got, tt.want)
+				t.Errorf("newDailyRandomTimeChecker() \ngot  = %v, \nwant %v", got, tt.want)
 			}
 		})
 	}
@@ -535,7 +535,7 @@ func Test_dailyRandomTime_CanSendNow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &dailyRandomTime{
+			d := &dailyRandomTimeChecker{
 				lastProcessedTime: tt.fields.lastProcessedTime,
 				nextCallTime:      tt.fields.nextCallTime,
 				from:              tt.fields.from,
@@ -543,11 +543,11 @@ func Test_dailyRandomTime_CanSendNow(t *testing.T) {
 				period:            tt.fields.period,
 				extraPeriod:       tt.fields.extraPeriod,
 			}
-			if got := d.CanSendNow(tt.args.t); got != tt.want {
-				t.Errorf("CanSendNow() = %v, want %v", got, tt.want)
+			if got := d.Check(tt.args.t); got != tt.want {
+				t.Errorf("Check() = %v, want %v", got, tt.want)
 			}
-			if d.CanSendNow(tt.args.t) {
-				t.Errorf("CanSendNow() returned true on double call ")
+			if d.Check(tt.args.t) {
+				t.Errorf("Check() returned true on double call ")
 			}
 		})
 	}

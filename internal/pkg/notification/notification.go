@@ -19,7 +19,7 @@ type notification struct {
 }
 
 func (n *notification) SendIfNeed(t time.Time, s Sender) {
-	if n.timeChecker.CanSendNow(t) {
+	if n.timeChecker.Check(t) {
 		s.Send(n.msgProvider.Message())
 	}
 }

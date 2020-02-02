@@ -26,9 +26,9 @@ func Test_notification_SendIfNeed(t *testing.T) {
 		want   string
 	}{
 		{
-			name: "message_provider: simple time_checker:dailyCertainTime",
+			name: "message_provider: simple time_checker:dailyCertainTimeChecker",
 			fields: fields{
-				timeChecker: &dailyCertainTime{
+				timeChecker: &dailyCertainTimeChecker{
 					certainTimes: []time.Time{time.Date(1, 1, 2, 3, 0, 0, 0, time.Local)},
 				},
 				msgProvider: &simpleMessageProvider{"foo"},

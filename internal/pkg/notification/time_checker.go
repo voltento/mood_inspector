@@ -12,13 +12,13 @@ import (
 const timeFault = time.Second * 10
 
 type TimeChecker interface {
-	CanSendNow(time time.Time) bool
+	Check(time time.Time) bool
 }
 
 func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 	var timeProvider TimeChecker
 	if len(cfg.CertainTime) > 0 {
-		timeProvider = &dailyCertainTime{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
+		timeProvider = &dailyCertainTimeChecker{certainTimes: cfg.CertainTime[0:len(cfg.CertainTime)]}
 	}
 
 	if cfg.RandomTime != nil {
@@ -26,7 +26,7 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 			return nil, errors.New("several time types provided")
 		}
 
-		if p, err := newDailyRandomTime(cfg); err != nil {
+		if p, err := newDailyRandomTimeChecker(cfg); err != nil {
 			return nil, errorswrp.Wrap(err, "can not build random timer")
 		} else {
 			timeProvider = p
@@ -40,7 +40,7 @@ func NewTimeChecker(cfg *NotificationCfg) (TimeChecker, error) {
 	return timeProvider, nil
 }
 
-type dailyRandomTime struct {
+type dailyRandomTimeChecker struct {
 	doubleCallChecker
 	lastProcessedTime daytime.DayTime
 	nextCallTime      daytime.DayTime
@@ -50,7 +50,7 @@ type dailyRandomTime struct {
 	extraPeriod       time.Duration
 }
 
-func (d *dailyRandomTime) CanSendNow(t time.Time) bool {
+func (d *dailyRandomTimeChecker) Check(t time.Time) bool {
 	if d.isDoubleCall(t) {
 		return false
 	}
@@ -73,7 +73,7 @@ func (d *dailyRandomTime) CanSendNow(t time.Time) bool {
 	return true
 }
 
-func (d *dailyRandomTime) Equal(r *dailyRandomTime) bool {
+func (d *dailyRandomTimeChecker) Equal(r *dailyRandomTimeChecker) bool {
 	if d.from != r.from {
 		return false
 	}
@@ -93,7 +93,7 @@ func (d *dailyRandomTime) Equal(r *dailyRandomTime) bool {
 	return true
 }
 
-func (d *dailyRandomTime) buildNextCallTime(newNextCallTime daytime.DayTime) daytime.DayTime {
+func (d *dailyRandomTimeChecker) buildNextCallTime(newNextCallTime daytime.DayTime) daytime.DayTime {
 	nextRand := func(from daytime.DayTime) daytime.DayTime {
 		nextTime := from.Add(d.period)
 		if d.extraPeriod != 0 {
@@ -112,7 +112,7 @@ func (d *dailyRandomTime) buildNextCallTime(newNextCallTime daytime.DayTime) day
 	return daytime.NewDayTimeFromTime(time.Now())
 }
 
-func (d *dailyRandomTime) inPeriodSendPeriod(t daytime.DayTime) bool {
+func (d *dailyRandomTimeChecker) inPeriodSendPeriod(t daytime.DayTime) bool {
 	if t.Get().Nanoseconds() > d.from.Nanoseconds() && t.Get().Nanoseconds() < d.to.Nanoseconds() {
 		return true
 	}
@@ -120,7 +120,7 @@ func (d *dailyRandomTime) inPeriodSendPeriod(t daytime.DayTime) bool {
 	return false
 }
 
-func newDailyRandomTime(config *NotificationCfg) (*dailyRandomTime, error) {
+func newDailyRandomTimeChecker(config *NotificationCfg) (*dailyRandomTimeChecker, error) {
 	randomTimeConfig := *config.RandomTime
 	emptyTime := time.Time{}
 	if randomTimeConfig.From == emptyTime {
@@ -147,7 +147,7 @@ func newDailyRandomTime(config *NotificationCfg) (*dailyRandomTime, error) {
 	}
 
 	lastProcessedTime := time.Now().Add(-config.RandomTime.ExtraPeriod)
-	timeCheker := &dailyRandomTime{
+	timeCheker := &dailyRandomTimeChecker{
 		lastProcessedTime: daytime.NewDayTimeFromTime(lastProcessedTime),
 		from:              from,
 		to:                to,
@@ -159,13 +159,13 @@ func newDailyRandomTime(config *NotificationCfg) (*dailyRandomTime, error) {
 }
 
 // This type of timeChecker does not worry about date, only about time of a day
-type dailyCertainTime struct {
+type dailyCertainTimeChecker struct {
 	doubleCallChecker
 	certainTimes      []time.Time
 	lastProcessedTime *time.Time
 }
 
-func (c *dailyCertainTime) CanSendNow(t time.Time) bool {
+func (c *dailyCertainTimeChecker) Check(t time.Time) bool {
 	if c.isDoubleCall(t) {
 		return false
 	}
