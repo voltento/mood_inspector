@@ -5,7 +5,7 @@ pipeline {
             steps {
                 echo 'Hello world!'
                 sh 'docker ps'
-                sh 'echo 'Hello world!' > hw.txt'
+                sh 'echo "Hello world!" > hw.txt'
             }
         }
     }
